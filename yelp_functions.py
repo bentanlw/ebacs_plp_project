@@ -1,22 +1,5 @@
-import spacy
-from pathlib import Path
-
-output_dir=Path('C:\\Users\\Ben\\Documents\\ebacs\\practical_language_processing\\ebacs_plp_project\\model\\')
-ner = spacy.load(output_dir)
-
-def entity_extractor(string, ner_model):
-    if string is None: return
-    else:
-        doc = ner_model(string)
-        entities = []
-        for ent in doc.ents:
-            entities.append(ent.text)
-            entities.append(ent.label_)
-    print(entities)
-    return entities
-
-def get_user_string():
-    return input("Hi, what would you like to eat?\n")
+import entities_functions
+from mdl_classification import PredictClass
 
 def get_yelp_resto(entity_list):
     if not entity_list: return "Sorry I can't understand you :(("
@@ -29,5 +12,40 @@ def get_yelp_resto(entity_list):
     return result
 
 def bot_response(userText):
-    entity = entity_extractor(userText, ner)
-    return get_yelp_resto(entity)
+    intent = get_intent(userText)
+    
+    if intent == 'unclassified':
+        return "Sorry I don't understand what you mean, could you rephrase that please?"
+    elif intent == 'greeting':
+        return "Hi! I can help with a recommendation, an enquiry or even reservations!"
+    elif intent == 'recommendation':
+        return recommendation_handler(userText)
+    elif intent == 'enquiry':
+        return enquiry_handler(userText)
+    elif intent == 'reservation':
+        return reservation_handler(userText)
+    else:#if none of the above, it is an 'goodbye' intent
+        return "Bye! Have a great day!"
+
+def get_intent(userText):
+    predict = PredictClass(userText)
+    return predict[1]
+
+def recommendation_handler(text):
+    entity = entities_functions.extractor(text, 'ner')
+
+    # check_identified_entities()
+    # check_entities_filled()
+    # if some_entities_missing or all_entities_missing:
+    #     ask_for_more_info
+    # else:
+    #     check_database_using_query
+    return "Here's a recommendation!"
+
+def enquiry_handler(text):
+    entity = entities_functions.extractor(text, 'ner')
+    return "Here's a enquiry!"
+
+def reservation_handler(text):
+    entity = entities_functions.extractor(text, 'ner')
+    return "Here's a reservation!"

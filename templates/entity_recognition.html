@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}
+Entity Recognition
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+
+	<main role="main" class="container">
+	  <div class="jumbotron">
+	    <h1>Entity Recognition</h1>
+	  </div>
+
+	<div class="d-flex justify-content-center">
+
+		<div class="container-fluid form-group">
+
+			<form action="#" method="POST">
+
+				<h4>User Query</h4>
+				<input type="text" class="form-control" name="query" id="query" value="{{query if query}}">
+
+				<br>
+
+				<h4>Prediction</h4>
+				<p>{{predict if predict}}</p>
+
+				<br>
+
+				<div class="row align-self-start">
+					<div class="col-2 align-self-center">
+						<button type="submit" class="btn btn-dark btn-block" name="submit" id="submit" value="mdl_test">Predict</button>
+					</div>
+				</div>
+
+				<br>
+
+				<h4>Entities</h4>
+				<textarea class="form-control" name="entities" id="entities" rows="4" readonly>{{entities if entities}}</textarea>
+
+			</form>
+
+		</div>
+
+	</div>
+
+	</main>
+
+</div>
+
+{% endblock %}
