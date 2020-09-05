@@ -24,21 +24,74 @@ Entity Recognition
 
 				<br>
 
-				<h4>Prediction</h4>
-				<p>{{predict if predict}}</p>
-
-				<br>
-
 				<div class="row align-self-start">
 					<div class="col-2 align-self-center">
 						<button type="submit" class="btn btn-dark btn-block" name="submit" id="submit" value="mdl_test">Predict</button>
 					</div>
+					<div class="col-2 align-self-center">
+						<button type="submit" class="btn btn-light btn-block" name="submit" id="submit" value="mdl_train">Train</button>
+					</div>
+					<div><b>{{status if status}}</b></div>
 				</div>
 
 				<br>
 
 				<h4>Entities</h4>
-				<textarea class="form-control" name="entities" id="entities" rows="4" readonly>{{entities if entities}}</textarea>
+
+				<div class="row align-self-start">
+					<div class="col-4">
+						<table class="table table-hover table-condensed">
+							<thead>
+								<tr>
+									<th>Slot</th>
+									<th>Value</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Intent</td>
+									<td>{{intent if intent}}</td>
+								</tr>
+								<tr>
+									<td>Restaurant</td>
+									<td>{{restaurant if restaurant}}</td>
+								</tr>
+								<tr>
+									<td>Food Type</td>
+									<td>{{food_type if food_type}}</td>
+								</tr>
+								<tr>
+									<td>Meal Type</td>
+									<td>{{meal_type if meal_type}}</td>
+								</tr>
+								<tr>
+									<td>Price</td>
+									<td>{{price if price}}</td>
+								</tr>
+								<tr>
+									<td>Rating</td>
+									<td>{{rating if rating}}</td>
+								</tr>
+								<tr>
+									<td>Reservation Date</td>
+									<td>{{date if date}}</td>
+								</tr>
+								<tr>
+									<td>Reservation Time</td>
+									<td>{{time if time}}</td>
+								</tr>
+								<tr>
+									<td>Reservation Name</td>
+									<td>{{name if name}}</td>
+								</tr>
+								<tr>
+									<td>Number of Guests</td>
+									<td>{{num_guests if num_guests}}</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
 
 			</form>
 
