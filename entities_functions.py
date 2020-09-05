@@ -29,7 +29,7 @@ class Enquiry:
 
 class Reservation:
     def __init__(self):
-        self.reserve_date = None
-        self.reserve_time = None
-        self.reserve_name = None
-        self.reserve_num = None
+        self.date = None
+        self.time = None
+        # self.reserve_name = None
+        self.num_guests = None

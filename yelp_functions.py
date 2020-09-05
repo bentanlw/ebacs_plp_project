@@ -12,7 +12,7 @@ def get_yelp_resto(entity_list):
     if not entity_list: return "Sorry I can't understand you :(("
     value = entity_list[0]
     column = entity_list[1]
-    # print(value)
+    
     if column == 'restaurant.type.food':
         result = 'Some delicious {} coming right up!'.format(value)
     else: result = "Sorry, we don't support that just yet!"
@@ -21,9 +21,6 @@ def get_yelp_resto(entity_list):
 def bot_response(userText):
     if intent.current_intent == None:
         intent.update_intent(get_intent(userText))
-    
-    # needs a flag to maintain the chosen intent
-    # remember to reset the intent later on
     
     if intent.current_intent == 'unclassified':
         intent.reset_intent()
@@ -48,44 +45,59 @@ def get_intent(userText):
 def recommendation_handler(text):
     entity = PredictNer(text)
 
-    check_identified_entities(entity)
-    slot_needed = check_unfilled_entities()
+    check_identified_entities(entity, rec)
+    slot_needed = check_unfilled_entities(rec)
 
     if slot_needed:
         return get_rec_response(slot_needed)
-    # if some_entities_missing or all_entities_missing:
-    #     ask_for_more_info
+    
     else:
         # check_database_using_query
         intent.reset_intent()
         return "Ready to query!"
-    # return "Here's a recommendation!"
+    
 
 def enquiry_handler(text):
     entity = PredictNer(text)
-    intent.reset_intent()
-    return "Here's a enquiry!"
+    
+    check_identified_entities(entity, enq)
+    slot_needed = check_unfilled_entities(enq)
+
+    if slot_needed:
+        return get_enq_response(slot_needed)
+
+    else:
+        intent.reset_intent()
+        return "Ready for enquiry!"
 
 def reservation_handler(text):
     entity = PredictNer(text)
-    intent.reset_intent()
-    return "Here's a reservation!"
+    
+    check_identified_entities(entity, res)
+    slot_needed = check_unfilled_entities(res)
 
-def check_identified_entities(in_dict):
+    if slot_needed:
+        return get_res_response(slot_needed)
+
+    else:
+        intent.reset_intent()
+        return "Ready to make a reservation!"
+
+def check_identified_entities(in_dict, ref):
     # check for which entities have yet to be identified
     # return bot response to get the missing entities
-    ref_keys = set(vars(rec).keys())
+    ref_keys = set(vars(ref).keys())
     in_keys = set(in_dict.keys())
     shared_keys = in_keys.intersection(ref_keys)
-
+    
     for key in shared_keys:
-        setattr(rec, key, in_dict[key])
+        setattr(ref, key, in_dict[key])
 
     return
 
-def check_unfilled_entities():
-    for key in vars(rec).keys():
-        if getattr(rec, key) == None:
+def check_unfilled_entities(ref):
+    for key in vars(ref).keys():
+        if getattr(ref, key) == None:
             return key
 
 def get_rec_response(text):
@@ -97,7 +109,23 @@ def get_rec_response(text):
         return "Alright, do you have a budget in mind?"
     if text == 'rating':
         return "How good of a restaurant?"
+    else:
+        return "Sorry I don't understand what you mean, could you rephrase that please?"
 
-# a = "hello i'm looking for italian restaurants below 30 dollars"
+def get_enq_response(text):
+    if text == 'restaurant':
+        return "Okay, what restaurant would you like to enquire about?"
+    else:
+        return "Sorry I don't understand what you mean, could you rephrase that please?"
 
-# check_identified_entities(a)
+def get_res_response(text):
+    if text == 'date':
+        return "What date is the reservation for?"
+    if text == 'time':
+        return "What time is the reservation for?"
+    # if text == 'reserve_name':
+    #     return "Who is this reservation for?"
+    if text == 'reserve_num':
+        return "And for how many people?"
+    else:
+        return "Sorry I don't understand what you mean, could you rephrase that please?"
