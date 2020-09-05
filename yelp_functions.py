@@ -1,8 +1,9 @@
 import entities_functions
+import intents_functions
 from mdl_classification import PredictClass
 from mdl_recognition import PredictNer
 
-curr_intent = None
+intent = intents_functions.Intents()
 enq = entities_functions.Enquiry()
 rec = entities_functions.Recommendation()
 res = entities_functions.Reservation()
@@ -17,26 +18,28 @@ def get_yelp_resto(entity_list):
     else: result = "Sorry, we don't support that just yet!"
     return result
 
-def bot_response(userText, current_intent = curr_intent):
-    if current_intent == None:
-        current_intent = get_intent(userText)
+def bot_response(userText):
+    if intent.current_intent == None:
+        intent.update_intent(get_intent(userText))
     
     # needs a flag to maintain the chosen intent
-    intent = current_intent
     # remember to reset the intent later on
     
-    if intent == 'unclassified':
-        return "Sorry I don't understand what you mean, could you rephrase that please?", intent
-    elif intent == 'greeting':
-        return "Hi! I can help with a recommendation, an enquiry or even reservations!", intent
-    elif intent == 'recommendation':
-        return recommendation_handler(userText), intent
-    elif intent == 'enquiry':
-        return enquiry_handler(userText), intent
-    elif intent == 'reservation':
-        return reservation_handler(userText), intent
+    if intent.current_intent == 'unclassified':
+        intent.reset_intent()
+        return "Sorry I don't understand what you mean, could you rephrase that please?"
+    elif intent.current_intent == 'greeting':
+        intent.reset_intent()
+        return "Hi! I can help with a recommendation, an enquiry or even reservations!"
+    elif intent.current_intent == 'recommendation':
+        return recommendation_handler(userText)
+    elif intent.current_intent == 'enquiry':
+        return enquiry_handler(userText)
+    elif intent.current_intent == 'reservation':
+        return reservation_handler(userText)
     else:#if none of the above, it is an 'goodbye' intent
-        return "Bye! Have a great day!", intent
+        intent.reset_intent()
+        return "Bye! Have a great day!"
 
 def get_intent(userText):
     predict = PredictClass(userText)
@@ -54,15 +57,18 @@ def recommendation_handler(text):
     #     ask_for_more_info
     else:
         # check_database_using_query
+        intent.reset_intent()
         return "Ready to query!"
     # return "Here's a recommendation!"
 
 def enquiry_handler(text):
     entity = PredictNer(text)
+    intent.reset_intent()
     return "Here's a enquiry!"
 
 def reservation_handler(text):
     entity = PredictNer(text)
+    intent.reset_intent()
     return "Here's a reservation!"
 
 def check_identified_entities(in_dict):
