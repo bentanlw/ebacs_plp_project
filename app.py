@@ -8,6 +8,7 @@ import webbrowser
 import yelp_functions
 import json
 from mdl_classification import Train, PredictClass
+from mdl_recognition import BuildNer, PredictNer
 
 app = Flask(__name__)
 app.secret_key = 'elym' # to access session
@@ -41,7 +42,8 @@ def home():
 @app.route('/get')
 def get_bot_response():
 	userText = request.args.get('msg')
-	return yelp_functions.bot_response(userText)
+	response = yelp_functions.bot_response(userText)
+	return response
 
 @app.route('/intent_classification/', methods=['POST','GET'])
 def intent_classification():
@@ -164,7 +166,46 @@ def intent_classification():
 
 @app.route('/entity_recognition/', methods=['POST','GET'])
 def entity_recognition():
-    return(render_template('entity_recognition.html'))
+
+	if request.method == 'POST':
+
+		if (request.form['submit']=='mdl_train'):
+
+			BuildNer()
+		
+			return(render_template('entity_recognition.html', 
+				status='Model trained.'))
+
+		if (request.form['submit']=='mdl_test'):
+
+			query = request.form['query'] # form variable name
+
+			query = query.strip('; ')
+			query = ' '.join(query.split())
+
+			intent = PredictClass(query.lower())[1]
+			entities = PredictNer(query)
+
+			query = ', '.join(entities.get('text',['']))
+
+			restaurant = ', '.join(entities.get('restaurant',['']))
+			food_type = ', '.join(entities.get('food_type',['']))
+			meal_type = ', '.join(entities.get('meal_type',['']))
+			price = ', '.join(entities.get('price',['']))
+			rating = ', '.join(entities.get('rating',['']))
+			
+			date = ', '.join(entities.get('date',['']))
+			time = ', '.join(entities.get('time',['']))
+			name = ', '.join(entities.get('name',['']))
+			num_guests = ', '.join(entities.get('num_guests',['']))
+		
+			return(render_template('entity_recognition.html', 
+				query=query, restaurant=restaurant, food_type=food_type,
+				meal_type=meal_type, price=price, rating=rating, 
+				date=date, time=time, name=name, num_guests=num_guests, 
+				intent=intent))
+
+	return(render_template('entity_recognition.html'))
 
 def open_browser():
     webbrowser.open_new('http://127.0.0.1:5000/')
