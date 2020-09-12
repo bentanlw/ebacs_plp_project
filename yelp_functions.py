@@ -125,7 +125,7 @@ def get_res_response(text):
         return "What time is the reservation for?"
     # if text == 'reserve_name':
     #     return "Who is this reservation for?"
-    if text == 'reserve_num':
+    if text == 'num_guests':
         return "And for how many people?"
     else:
         return "Sorry I don't understand what you mean, could you rephrase that please?"
