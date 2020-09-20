@@ -1,5 +1,6 @@
 import entities_functions
 import intents_functions
+import query_functions
 from mdl_classification import PredictClass
 from mdl_recognition import PredictNer
 
@@ -7,6 +8,7 @@ intent = intents_functions.Intents()
 enq = entities_functions.Enquiry()
 rec = entities_functions.Recommendation()
 res = entities_functions.Reservation()
+slot = entities_functions.Slots()
 
 def get_yelp_resto(entity_list):
     if not entity_list: return "Sorry I can't understand you :(("
@@ -45,8 +47,10 @@ def get_intent(userText):
 def recommendation_handler(text):
     entity = PredictNer(text)
 
-    check_identified_entities(entity, rec)
-    slot_needed = check_unfilled_entities(rec)
+    # check_identified_entities(entity, rec)
+    check_identified_entities(entity, slot)
+    # slot_needed = check_unfilled_entities(rec)
+    slot_needed = slot.check_rec()
 
     if slot_needed:
         return get_rec_response(slot_needed)
@@ -54,34 +58,40 @@ def recommendation_handler(text):
     else:
         # check_database_using_query
         intent.reset_intent()
-        return "Ready to query!"
+        return query_functions.get_recommendation(slot)
     
 
 def enquiry_handler(text):
     entity = PredictNer(text)
     
-    check_identified_entities(entity, enq)
-    slot_needed = check_unfilled_entities(enq)
+    # check_identified_entities(entity, enq)
+    check_identified_entities(entity, slot)
+    # slot_needed = check_unfilled_entities(enq)
+    slot_needed = slot.check_enq()
 
     if slot_needed:
         return get_enq_response(slot_needed)
 
     else:
         intent.reset_intent()
-        return "Ready for enquiry!"
+        return query_functions.get_enquiry(slot)
 
 def reservation_handler(text):
+    # should check if a restaurant has been identified yet
     entity = PredictNer(text)
     
-    check_identified_entities(entity, res)
-    slot_needed = check_unfilled_entities(res)
+    # check_identified_entities(entity, res)
+    check_identified_entities(entity, slot)
+    # slot_needed = check_unfilled_entities(res)
+    slot_needed = slot.check_res()
+    
 
     if slot_needed:
         return get_res_response(slot_needed)
 
     else:
         intent.reset_intent()
-        return "Ready to make a reservation!"
+        return query_functions.get_reservation(slot)
 
 def check_identified_entities(in_dict, ref):
     # check for which entities have yet to be identified
@@ -123,8 +133,8 @@ def get_res_response(text):
         return "What date is the reservation for?"
     if text == 'time':
         return "What time is the reservation for?"
-    # if text == 'reserve_name':
-    #     return "Who is this reservation for?"
+    if text == 'reserve_name':
+        return "Who is this reservation for?"
     if text == 'num_guests':
         return "And for how many people?"
     else:
