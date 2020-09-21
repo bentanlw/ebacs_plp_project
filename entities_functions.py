@@ -1,6 +1,7 @@
 import spacy
 from pathlib import Path
 from timefhuman import timefhuman
+import re
 
 output_dir=Path('models/resto_entity_recognition')
 ner = spacy.load(output_dir)
@@ -108,5 +109,43 @@ class Slots:
         
         return mealtime
 
+    def get_budget(self):
+        price = re.findall("\d+", self.price)
+        
+        if len(price) < 2:
+            price_range = range(0, int(price[0]))
+        else:
+            price.sort()
+            price_range = range(int(price[0]), int(price[-1])+1)
+        
+        budget = []
+        #0 NA
+        #1 <$10
+        range_1 = range(11)
+        #2 $11-$30
+        range_2 = range(11,31)
+        #3 $31-$60
+        range_3 = range(31, 61)
+        #4 >$61
+
+        if self._range_overlapping(price_range, range_1):
+            budget.append(1)
+        if self._range_overlapping(price_range, range_2):
+            budget.append(2)
+        if self._range_overlapping(price_range, range_3):
+            budget.append(3)
+        if price_range.stop > 60:
+            budget.append(4)
+        
+        return budget
+    
+    def _range_overlapping(self, x, y):
+        if x.start == x.stop or y.start == y.stop:
+            return False
+        return ((x.start < y.stop  and x.stop > y.start) or
+                (x.stop  > y.start and y.stop > x.start))
+   
+
+
 slot = Slots()
-setattr(slot, 'time', '10:15am')
+setattr(slot, 'price', 'between 10 and 30')
