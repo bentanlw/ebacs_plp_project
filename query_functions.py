@@ -1,5 +1,6 @@
 import pandas as pd
 from timefhuman import timefhuman
+from numerizer import numerize
 
 class Time:
     def __init__(self):
