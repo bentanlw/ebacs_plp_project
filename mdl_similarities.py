@@ -24,7 +24,7 @@ def _initialize():
 
 	with open('models/resto_restaurants.pkl', 'rb') as f:
 		resto = pickle.load(f)
-
+	# resto = pd.read_csv('data/business_extract_filter_clean1.csv', index_col=0)
 	return model, embed_resto, resto, vocab
 
 def _get_ents(entities, vocab):
@@ -81,9 +81,14 @@ def similar_resto(terms, top_n=10,
 
 	# resto_filtered = list(resto['terms'].apply(lambda x: reg.search(x)!=None).index)
 	# df_cosine_sim1 = df_cosine_sim.loc[resto_filtered]
-	
+	# print(df_cosine_sim[:top_n], df_cosine_sim[:top_n].index)
 	return resto.loc[df_cosine_sim[:top_n].index,get_fields]
 
+def load_resto():
+	with open('models/resto_restaurants.pkl', 'rb') as f:
+		resto = pickle.load(f)
+	# resto = pd.read_csv('data/business_extract_filter_clean1.csv', index_col=0)
+	return resto
 # For debugging
 # print(similar_resto(['salmon sashimi', 'Japanese']))
 # print(similar_resto(['salmon sashimi']))

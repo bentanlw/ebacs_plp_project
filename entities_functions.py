@@ -78,7 +78,7 @@ class Slots:
 
     def get_weekday(self):
         dt = timefhuman(self.date)
-        return dt.weekday()
+        return "{}_mealtype".format(dt.strftime('%A'))
 
     def get_time(self):
         dt = timefhuman(self.time)
@@ -147,5 +147,6 @@ class Slots:
    
 
 
-slot = Slots()
-setattr(slot, 'price', 'between 10 and 30')
+
+# slot = Slots()
+# setattr(slot, 'date', 'tomorrow')

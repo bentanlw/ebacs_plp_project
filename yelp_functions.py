@@ -3,6 +3,7 @@ import intents_functions
 import query_functions
 from mdl_classification import PredictClass
 from mdl_recognition import PredictNer
+from mdl_similarities import similar_resto, load_resto
 
 intent = intents_functions.Intents()
 enq = entities_functions.Enquiry()
@@ -58,7 +59,7 @@ def recommendation_handler(text):
     else:
         # check_database_using_query
         intent.reset_intent()
-        return query_functions.get_recommendation(slot)
+        return get_recommendation(slot)
     
 
 def enquiry_handler(text):
@@ -139,3 +140,23 @@ def get_res_response(text):
         return "And for how many people?"
     else:
         return "Sorry I don't understand what you mean, could you rephrase that please?"
+
+def get_recommendation(slot):
+    df = similar_resto(slot.food_type)
+    # is resto open?
+    # df = df[df[slot.get_weekday] == slot.get_mealtime]
+    # is resto within budget?
+    # df = df[df['PriceRange'].isin(slot.get_budget)]
+    # is resto above rating?
+    # df = df[df['stars'] >= slot.rating]
+    return df
+
+def get_enquiry(slot):
+    df = load_resto()
+    
+    return df[df.name == slot.restaurant]
+
+def get_reservation(slot):
+    # need some way of differentiating if we got here from enquiry or recommendation or directly
+
+setattr(slot, 'food_type', ['sashimi'])
