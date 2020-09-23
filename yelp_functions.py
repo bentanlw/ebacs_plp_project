@@ -158,5 +158,5 @@ def get_enquiry(slot):
 
 def get_reservation(slot):
     # need some way of differentiating if we got here from enquiry or recommendation or directly
-
-setattr(slot, 'food_type', ['sashimi'])
+    pass
+# setattr(slot, 'food_type', ['sashimi'])
