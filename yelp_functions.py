@@ -147,7 +147,7 @@ def get_recommendation(slot):
     # df = df[df[slot.get_weekday] == slot.get_mealtime]
     # is resto within budget?
     # df = df[df['PriceRange'].isin(slot.get_budget)]
-    # is resto above rating?
+    # is resto above rating? add in sentiment score here
     # df = df[df['stars'] >= slot.rating]
     return df
 

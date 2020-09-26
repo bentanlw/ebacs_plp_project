@@ -99,3 +99,6 @@ def load_resto():
 # print(similar_resto(['kimbab', 'Korean']))
 # print(similar_resto(['ramen']))
 # print(similar_resto(['ramen bowl']))
+
+# eugene's weekday_time can be read as resto.monday[0][2][x]
+# where x goes from 0-3, breakfast, brunch, lunch, dinner

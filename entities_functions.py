@@ -96,16 +96,24 @@ class Slots:
         dinner_range = range(1600,2400)
         
         time = int(self.get_time())
-        mealtime = 10000
+        mealtime = []
 
         if time in breakfast_range:
-            mealtime += 1
+            mealtime.append(1)
+        else:
+            mealtime.append(0)
         if time in brunch_range:
-            mealtime += 10
+            mealtime.append(1)
+        else:
+            mealtime.append(0)
         if time in lunch_range:
-            mealtime += 100
+            mealtime.append(1)
+        else:
+            mealtime.append(0)
         if time in dinner_range:
-            mealtime += 1000
+            mealtime.append(1)
+        else:
+            mealtime.append(0)
         
         return mealtime
 
