@@ -4,7 +4,7 @@
 import pickle
 import numpy as np
 
-with open('embeddings.pkl', 'rb') as f:
+with open('models/resto_glove_embeddings.pkl', 'rb') as f:
 	embeddings = pickle.load(f)
 
 embeddings['DUMMY'] = np.zeros(100, dtype=np.float32)
@@ -15,6 +15,7 @@ from gensim.corpora import Dictionary
 dictionary = Dictionary([list(embeddings.keys())])
 
 DUMMY_ID = dictionary.token2id['DUMMY']
+MAXLEN = 256
 
 # Shallow CNN classifier
 from keras import layers
@@ -23,16 +24,11 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers import Embedding, Conv1D, MaxPooling1D, GlobalMaxPooling1D, Dense
 
+from keras.models import load_model
+
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import class_weight
-
-# Load pretrained model
-from keras.models import load_model
-# MODEL = load_model('models/resto_classification_cnn.h5')
-
-# with open('models/labels.pkl', 'rb') as f:
-# 	LABELS = pickle.load(f)
 
 import spacy
 nlp = spacy.load('en_core_web_sm', disable=['tagger','ner'])
@@ -46,6 +42,7 @@ def Train(intents):
 
 	return None
 
+# for model development
 def PrepareData(intents):
 
 	global LABELS
@@ -66,8 +63,8 @@ def PrepareData(intents):
 	x_test = [[dictionary.token2id.get(tok.text.lower(), DUMMY_ID) for tok in nlp(x)] for x in x_test]
 
 	# pad the sentences
-	x_train = pad_sequences(x_train, padding='post', maxlen=512)
-	x_test = pad_sequences(x_test, padding='post', maxlen=512)
+	x_train = pad_sequences(x_train, padding='post', maxlen=MAXLEN)
+	x_test = pad_sequences(x_test, padding='post', maxlen=MAXLEN)
 
 	# create class weight dictionary
 	class_weights = class_weight.compute_class_weight('balanced', np.unique(y_train), y_train)
@@ -99,7 +96,7 @@ def PrepareData(intents):
 
 def TrainCnn(x_train, x_test, y_train, y_test, class_weights):
 
-	maxlen     = 256
+	maxlen     = MAXLEN
 	vocab_size = embedding_matrix.shape[0]
 	embed_dim  = embedding_matrix.shape[1]
 	input_len  = x_train.shape[1]
@@ -123,10 +120,10 @@ def TrainCnn(x_train, x_test, y_train, y_test, class_weights):
 
 	#train the model
 	hist = model.fit(x_train, y_train, class_weight=class_weights, 
-		epochs=50, batch_size=16, verbose=True, 
+		epochs=30, batch_size=32, verbose=True, 
 		validation_data=(x_test, y_test)).history
 
-	print('')
+	print()
 
 	loss, accuracy = model.evaluate(x_train, y_train, verbose=True)
 	print('Training Accuracy: {:.4f}'.format(accuracy))
@@ -136,36 +133,39 @@ def TrainCnn(x_train, x_test, y_train, y_test, class_weights):
 
 	model.save('models/resto_classification_cnn.h5')
 
-	with open('models/labels.pkl', 'wb') as f:
+	with open('models/resto_classification_labels.pkl', 'wb') as f:
 		pickle.dump(LABELS, f)
 
-	# plot_history(hist)
+	with open('models/resto_classification_hist.pkl', 'wb') as f:
+		pickle.dump(hist, f)
 
 	return None
 
 # model_cnn = TrainCnn()
 
+# for prod implementation
 def PrepareData2(text):
 
 	text = [[dictionary.token2id.get(tok.text.lower(), DUMMY_ID) for tok in nlp(text)]]
-	text = pad_sequences(text, padding='post', maxlen=512)
+	text = pad_sequences(text, padding='post', maxlen=MAXLEN)
 
 	return text
 
 def PredictClass(text):
-	model = load_model(r'models\resto_classification_cnn.h5')
-	with open('models/labels.pkl', 'rb') as f:
+
+	model = load_model('models/resto_classification_cnn.h5')
+	with open('models/resto_classification_labels.pkl', 'rb') as f:
 		labels = pickle.load(f)
 
 	input_text = PrepareData2(text)
 	prediction = model.predict(input_text)
 
-	if max(prediction[0])<(1/len(labels))*1.4:
+	if max(prediction[0])<(1/len(labels))*1.5:
 		label = 'unclassified'
 	else:
 		label = labels[np.argmax(prediction[0])]
 
 	print('Predicted class is:  {}'.format(label.upper()))
 	print('Class probabilities: {}'.format(np.round(prediction[0],2)))
-	
+
 	return prediction, label

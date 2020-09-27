@@ -34,7 +34,7 @@ def BuildNer():
 	# initialize random weights
 	model.begin_training()
 
-	for i in tqdm(range(15)):
+	for i in tqdm(range(6)):
 
 		random.shuffle(df)
 		losses = {}
@@ -73,5 +73,4 @@ def PredictNer(text):
 	# prediction1 = {ent.label_ : ent.text for ent in prediction.ents}
 	prediction1['text'] = [prediction.text]
 	
-	print(prediction1)
 	return prediction1
