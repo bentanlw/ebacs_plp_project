@@ -125,7 +125,7 @@ def get_rec_response(text):
 
 def get_enq_response(text):
     if text == 'restaurant':
-        return "Okay, what restaurant would you like to enquire about?"
+        return "Okay, what restaurant would you like to know about?"
     else:
         return "Sorry I don't understand what you mean, could you rephrase that please?"
 
@@ -142,9 +142,15 @@ def get_res_response(text):
         return "Sorry I don't understand what you mean, could you rephrase that please?"
 
 def get_recommendation(slot):
-    df = similar_resto(slot.food_type)
+    df = similar_resto(slot.food_type, top_n = 100)
+    print(len(df.index))
     # is resto open?
-    # df = df[df[slot.get_weekday] == slot.get_mealtime]
+    ## check if open on that day
+    df = df.loc[df[slot.get_weekday()].dropna().index]
+    print(len(df.index))
+    ## check if open at that timing
+    df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], slot.get_mealtime()))]
+    print(len(df.index))
     # is resto within budget?
     # df = df[df['PriceRange'].isin(slot.get_budget)]
     # is resto above rating? add in sentiment score here
@@ -154,9 +160,27 @@ def get_recommendation(slot):
 def get_enquiry(slot):
     df = load_resto()
     
-    return df[df.name == slot.restaurant]
+    return df[df.name.str.lower() == slot.restaurant.str.lower()]
 
 def get_reservation(slot):
     # need some way of differentiating if we got here from enquiry or recommendation or directly
     pass
+
+def restaurant_open(series, list):
+    open_list = []
+    series_idx = series.index
+    for idx, item in enumerate(series):
+        if check_mealtime(item[2], list):
+            open_list.append(series_idx[idx])
+    return open_list
+
+def check_mealtime(list_1, list_2):
+    is_open = False
+    for index, (e1, e2) in enumerate(zip(list_1, list_2)):
+        if e1 == e2:
+            if e1 == 1:
+                is_open = True
+    return is_open        
 # setattr(slot, 'food_type', ['sashimi'])
+bot_response("are there any good Italian restaurants under 30 for dinner tomorrow at 7am?")
+

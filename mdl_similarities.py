@@ -25,7 +25,11 @@ def _initialize():
 	with open('models/resto_restaurants.pkl', 'rb') as f:
 		resto = pickle.load(f)
 	# resto = pd.read_csv('data/business_extract_filter_clean1.csv', index_col=0)
-	return model, embed_resto, resto, vocab
+
+	with open('models/resto_mapper.pkl', 'rb') as f:
+		mapper = pickle.load(f)
+
+	return model, embed_resto, resto, vocab, mapper
 
 def _get_ents(entities, vocab):
     ents = []
@@ -44,7 +48,7 @@ def _get_ents(entities, vocab):
 def similar_resto(terms, top_n=10, 
 	get_fields=['name', 'address', 'hours', 'categories']):
 
-	model, embed_resto, resto, vocab = _initialize()
+	model, embed_resto, resto, vocab, mapper = _initialize()
 
 	# categories = ', '.join([x.lower() for x in resto['categories']])
 	# categories = list(set(categories.split(', ')))
@@ -82,13 +86,23 @@ def similar_resto(terms, top_n=10,
 	# resto_filtered = list(resto['terms'].apply(lambda x: reg.search(x)!=None).index)
 	# df_cosine_sim1 = df_cosine_sim.loc[resto_filtered]
 	# print(df_cosine_sim[:top_n], df_cosine_sim[:top_n].index)
-	return resto.loc[df_cosine_sim[:top_n].index,get_fields]
+	resto_id = resto[resto['name'].str.lower().isin(df_cosine_sim[:top_n].index)].index
+	map_id = mapper[mapper['business_id'].isin(resto_id)].business_id1
+	
+
+	# return resto.loc[df_cosine_sim[:top_n].index,get_fields]
+	return resto[resto.index.isin(map_id)]
 
 def load_resto():
 	with open('models/resto_restaurants.pkl', 'rb') as f:
 		resto = pickle.load(f)
 	# resto = pd.read_csv('data/business_extract_filter_clean1.csv', index_col=0)
 	return resto
+def load_mapper():
+	with open('models/resto_mapper.pkl', 'rb') as f:
+		mapper = pickle.load(f)
+	# resto = pd.read_csv('data/business_extract_filter_clean1.csv', index_col=0)
+	return mapper
 # For debugging
 # print(similar_resto(['salmon sashimi', 'Japanese']))
 # print(similar_resto(['salmon sashimi']))

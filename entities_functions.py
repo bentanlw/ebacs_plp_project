@@ -78,10 +78,11 @@ class Slots:
 
     def get_weekday(self):
         dt = timefhuman(self.date)
-        return "{}_mealtype".format(dt.strftime('%A'))
+        return dt.strftime('%A').lower()
 
     def get_time(self):
-        dt = timefhuman(self.time)
+        dt = self.time
+        dt = timefhuman(*dt)
         return dt.strftime('%H%M')
 
     def get_mealtime(self):
@@ -118,7 +119,8 @@ class Slots:
         return mealtime
 
     def get_budget(self):
-        price = re.findall("\d+", self.price)
+        price = self.price
+        price = re.findall("\d+", *price)
         
         if len(price) < 2:
             price_range = range(0, int(price[0]))
