@@ -48,6 +48,17 @@ class Slots:
         self.reserve_name = None
         self.num_guests = None
 
+    def clear_slots(self):
+        self.food_type = None
+        self.meal_type = None
+        self.price = None
+        self.rating = 4
+        self.restaurant = None
+        self.date = None
+        self.time = None
+        self.reserve_name = None
+        self.num_guests = None
+
     def check_rec(self):
         if self.food_type == None:
             return "food_type"
@@ -78,7 +89,7 @@ class Slots:
 
     def get_weekday(self):
         dt = timefhuman(self.date)
-        return dt.strftime('%A').lower()
+        return '{}_mealtype'.format(dt.strftime('%A'))
 
     def get_time(self):
         dt = self.time
@@ -86,6 +97,31 @@ class Slots:
         return dt.strftime('%H%M')
 
     def get_mealtime(self):
+        #figure out which mealtime slot the time fits into
+        #breakfast is 6-11am
+        breakfast_range = range(600,1100)
+        #brunch is 10-12pm
+        brunch_range = range(1000,1200)
+        #lunch is 11-4pm
+        lunch_range = range(1100,1600)
+        #dinner is 4-12am
+        dinner_range = range(1600,2400)
+        
+        time = int(self.get_time())
+        mealtime = 10000
+
+        if time in breakfast_range:
+            mealtime += 1
+        if time in brunch_range:
+            mealtime += 10
+        if time in lunch_range:
+            mealtime += 100
+        if time in dinner_range:
+            mealtime += 1000
+        
+        return mealtime
+
+    def get_mealtime2(self):
         #figure out which mealtime slot the time fits into
         #breakfast is 6-11am
         breakfast_range = range(600,1100)

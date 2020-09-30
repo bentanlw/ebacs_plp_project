@@ -75,7 +75,7 @@ def enquiry_handler(text):
 
     else:
         intent.reset_intent()
-        return query_functions.get_enquiry(slot)
+        return get_enquiry(slot)
 
 def reservation_handler(text):
     # should check if a restaurant has been identified yet
@@ -142,25 +142,38 @@ def get_res_response(text):
         return "Sorry I don't understand what you mean, could you rephrase that please?"
 
 def get_recommendation(slot):
-    df = similar_resto(slot.food_type, top_n = 100)
+    error_handler = False
+    df = similar_resto(slot.food_type, top_n = 1000)
     print(len(df.index))
     # is resto open?
     ## check if open on that day
-    df = df.loc[df[slot.get_weekday()].dropna().index]
-    print(len(df.index))
-    ## check if open at that timing
-    df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], slot.get_mealtime()))]
-    print(len(df.index))
+    # df = df.loc[df[slot.get_weekday()].dropna().index]
+    # print(len(df.index))
+    # ## check if open at that timing
+    # df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], slot.get_mealtime()))]
+    # print(len(df.index))
+    df = df[df[slot.get_weekday()] == slot.get_mealtime()]
+   
     # is resto within budget?
-    # df = df[df['PriceRange'].isin(slot.get_budget)]
-    # is resto above rating? add in sentiment score here
-    # df = df[df['stars'] >= slot.rating]
-    return df
+    df = df[df['PriceRange'].isin(slot.get_budget())]
+
+    # is resto above rating? add in Sentiment_mean here
+    df = df[df['stars'] >= slot.rating]
+    
+    if len(df.index) == 0:
+        error_handler = True
+    # return df[:5].name.to_string()
+
+    if error_handler == True:
+        return "Sorry, we did not manage to locate any restaurants that match your query"
+    
+    else:
+        return df
 
 def get_enquiry(slot):
     df = load_resto()
     
-    return df[df.name.str.lower() == slot.restaurant.str.lower()]
+    return df[df.name.str.lower() == slot.restaurant.lower()]
 
 def get_reservation(slot):
     # need some way of differentiating if we got here from enquiry or recommendation or directly
@@ -182,5 +195,5 @@ def check_mealtime(list_1, list_2):
                 is_open = True
     return is_open        
 # setattr(slot, 'food_type', ['sashimi'])
-bot_response("are there any good Italian restaurants under 30 for dinner tomorrow at 7am?")
+bot_response("are there any good salmon sashimi restaurants under 30 for dinner tomorrow at 7pm?")
 

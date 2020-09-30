@@ -22,9 +22,9 @@ def _initialize():
 	with open('models/resto_d2v_embeddings.pkl', 'rb') as f:
 		embed_resto = pickle.load(f)
 
-	with open('models/resto_restaurants.pkl', 'rb') as f:
-		resto = pickle.load(f)
-	# resto = pd.read_csv('data/business_extract_filter_clean1.csv', index_col=0)
+	# with open('models/resto_restaurants.pkl', 'rb') as f:
+	# 	resto = pickle.load(f)
+	resto = load_resto()
 
 	with open('models/resto_mapper.pkl', 'rb') as f:
 		mapper = pickle.load(f)
@@ -86,17 +86,22 @@ def similar_resto(terms, top_n=10,
 	# resto_filtered = list(resto['terms'].apply(lambda x: reg.search(x)!=None).index)
 	# df_cosine_sim1 = df_cosine_sim.loc[resto_filtered]
 	# print(df_cosine_sim[:top_n], df_cosine_sim[:top_n].index)
-	resto_id = resto[resto['name'].str.lower().isin(df_cosine_sim[:top_n].index)].index
-	map_id = mapper[mapper['business_id'].isin(resto_id)].business_id1
-	
+	# resto_id = resto[resto['name'].str.lower().isin(df_cosine_sim[:top_n].index)].index
+	# map_id = mapper[mapper['business_id'].isin(resto_id)].business_id1
+	map_id = mapper[mapper['name1'].isin(df_cosine_sim[:top_n].index)].business_id1
+
+	# directly go from df_cosin_sim to name1 in mapper
+	# query resto using biz_id1 from mapper
 
 	# return resto.loc[df_cosine_sim[:top_n].index,get_fields]
 	return resto[resto.index.isin(map_id)]
 
 def load_resto():
-	with open('models/resto_restaurants.pkl', 'rb') as f:
-		resto = pickle.load(f)
-	# resto = pd.read_csv('data/business_extract_filter_clean1.csv', index_col=0)
+	# with open('models/resto_restaurants.pkl', 'rb') as f:
+	# 	resto = pickle.load(f)
+	resto = pd.read_csv('data/final.csv', index_col=0)
+	resto = resto.dropna()
+	resto[resto.filter(regex = 'mealtype|PriceRange').columns] = resto[resto.filter(regex = 'mealtype|PriceRange').columns].astype(int)
 	return resto
 def load_mapper():
 	with open('models/resto_mapper.pkl', 'rb') as f:
