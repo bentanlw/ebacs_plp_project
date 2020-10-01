@@ -168,8 +168,8 @@ def get_recommendation(slot):
         return "Sorry, we did not manage to locate any restaurants that match your query"
     
     else:
-        # return df[['name', 'categories']][:5].to_csv(index = False)
-        return df[:5]
+        return build_rec_response(df[['name', 'categories']][:3].to_csv(index = False), slot)
+        # return df[:5]
 
 def get_enquiry(slot):
     df = load_resto()
@@ -197,9 +197,19 @@ def check_mealtime(list_1, list_2):
     return is_open
 
 def format_rec_response(s):
-    s_list = s.split("\r\n")[1:]
+    s_list = s.split("\r\n")[1:-1]
     s_list = [element.split(",\"") for element in s_list]
     s_list = [[m.replace("\"","") for m in n] for n in s_list]
+
+    return s_list
+
+def build_rec_response(s, slot):
+    start = "We found the following restaurants that match {}<br/><br/>".format(slot.food_type)
+    ss = ""
+    end = "<br/>Which number of restaurant would you prefer?"
+    for i, n in enumerate(format_rec_response(s)):
+        ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
+    return start+ss+end
 # setattr(slot, 'food_type', ['sashimi'])
 bot_response("are there any good salmon sashimi restaurants under 30 for dinner tomorrow at 7pm?")
 
