@@ -6,9 +6,9 @@ from mdl_recognition import PredictNer
 from mdl_similarities import similar_resto, load_resto
 
 intent = intents_functions.Intents()
-enq = entities_functions.Enquiry()
-rec = entities_functions.Recommendation()
-res = entities_functions.Reservation()
+# enq = entities_functions.Enquiry()
+# rec = entities_functions.Recommendation()
+# res = entities_functions.Reservation()
 slot = entities_functions.Slots()
 
 def get_yelp_resto(entity_list):
@@ -168,7 +168,8 @@ def get_recommendation(slot):
         return "Sorry, we did not manage to locate any restaurants that match your query"
     
     else:
-        return df
+        # return df[['name', 'categories']][:5].to_csv(index = False)
+        return df[:5]
 
 def get_enquiry(slot):
     df = load_resto()
@@ -193,7 +194,12 @@ def check_mealtime(list_1, list_2):
         if e1 == e2:
             if e1 == 1:
                 is_open = True
-    return is_open        
+    return is_open
+
+def format_rec_response(s):
+    s_list = s.split("\r\n")[1:]
+    s_list = [element.split(",\"") for element in s_list]
+    s_list = [[m.replace("\"","") for m in n] for n in s_list]
 # setattr(slot, 'food_type', ['sashimi'])
 bot_response("are there any good salmon sashimi restaurants under 30 for dinner tomorrow at 7pm?")
 
