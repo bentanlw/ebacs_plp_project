@@ -102,6 +102,7 @@ def load_resto():
 	resto = pd.read_csv('data/final.csv', index_col=1)
 	resto = resto.dropna()
 	resto[resto.filter(regex = 'mealtype|PriceRange').columns] = resto[resto.filter(regex = 'mealtype|PriceRange').columns].astype(int)
+	resto['score'] = resto['stars']*resto['Sentiment_mean']
 	return resto
 def load_mapper():
 	with open('models/resto_mapper.pkl', 'rb') as f:

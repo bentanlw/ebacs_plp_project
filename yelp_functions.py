@@ -203,8 +203,8 @@ def get_recommendation(slot):
         # is resto within budget?
         df = df[df['PriceRange'].isin(slot.get_budget())]
 
-        # is resto above rating? add in Sentiment_mean here
-        df = df[df['stars'] >= slot.rating]
+        # multiplied stars by sentiment, so here i sort by the final product
+        df = df.sort_values(by = ['score'], ascending = False)
     
         if len(df.index) == 0:
             error_state = 2
@@ -221,12 +221,14 @@ def get_enquiry(slot):
     result = "Sorry, we couldn't find that restaurant!"
     df = load_resto()
     get_fields=['name', 'address', 'hours', 'categories']
-    df = df[get_fields]
+
     if df is None:
         error_state = 1
     else:
         rest_list = [n.lower() for n in slot.restaurant]
-        slot.result = df[df.name.str.lower().isin(rest_list)].head(1)
+        df = df[df.name.str.lower().isin(rest_list)]
+        df = df.sort_values(by = ['score'], ascending = False).head(1)
+        slot.result = df[get_fields]
         if len(slot.result.index) == 0:
             error_state = 2
         else:
@@ -243,6 +245,7 @@ def get_reservation(slot):
         rest_list = [n.lower() for n in slot.restaurant]
         df = df[df.name.str.lower().isin(rest_list)]
         df = df[df[slot.get_weekday()] == slot.get_mealtime()]
+        df = df[df.name.str.lower().isin(rest_list)]
         if len(df.index) == 0:
             error_state = 2
             result = "Sorry, this restaurant isn't open at that time!"
