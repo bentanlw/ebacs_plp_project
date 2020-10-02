@@ -91,7 +91,7 @@ def enquiry_handler(text):
         return get_enq_response(slot_needed)
 
     else:
-        intent.reset_intent()
+        intent.update_intent('reservation')
         result, error_state = get_enquiry(slot)
         return result
 
@@ -120,11 +120,12 @@ def reservation_handler(text):
 
     else:
         intent.reset_intent()
-        return get_reservation(slot)
+        result, error_state = get_reservation(slot)
+        return result
 
 def check_reservation_choice(text):
     # hardcoded for now, replace with ner?
-    if text.find("yes") > -1:
+    if text.lower().find("yes") > -1:
         slot.reservation_required = 1
         return reservation_handler(text)
     
@@ -219,10 +220,13 @@ def get_enquiry(slot):
     error_state = 0
     result = "Sorry, we couldn't find that restaurant!"
     df = load_resto()
+    get_fields=['name', 'address', 'hours', 'categories']
+    df = df[get_fields]
     if df is None:
         error_state = 1
     else:
-        slot.result = df[df.name.str.lower() == slot.restaurant.lower()]
+        rest_list = [n.lower() for n in slot.restaurant]
+        slot.result = df[df.name.str.lower().isin(rest_list)].head(1)
         if len(slot.result.index) == 0:
             error_state = 2
         else:
@@ -236,11 +240,13 @@ def get_reservation(slot):
     if df is None:
         error_state = 1
     else:
-        df = df[df.name.str.lower() == slot.restaurant.lower()]
+        rest_list = [n.lower() for n in slot.restaurant]
+        df = df[df.name.str.lower().isin(rest_list)]
+        df = df[df[slot.get_weekday()] == slot.get_mealtime()]
         if len(df.index) == 0:
             error_state = 2
+            result = "Sorry, this restaurant isn't open at that time!"
         else:
-            df = df[df[slot.get_weekday()] == slot.get_mealtime()]
             result = build_res_response(df.to_csv(index = False), slot)
     return result, error_state
 
@@ -273,6 +279,21 @@ def build_rec_response(s, slot):
     end = "<br/>Which number of restaurant would you prefer?"
     for i, n in enumerate(format_rec_response(s)):
         ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
+    return start+ss+end
+
+def build_enq_response(s, slot):
+    start = "Here are the details for {}<br/><br/>".format(slot.restaurant)
+    ss = ""
+    end = "<br/>Would you like to make a reservation?"
+    for i, n in enumerate(format_rec_response(s)):
+        ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
+    return start+ss+end
+
+def build_res_response(s, slot):
+    start = "Success! You have made a reservation at {}<br/>".format(slot.restaurant)
+    ss = "for {} at {} for {} guests.".format(slot.get_date(), slot.get_time(), slot.num_guests)
+    end = "<br/>We hope you have a great meal!"
+
     return start+ss+end
 # setattr(slot, 'food_type', ['sashimi'])
 # bot_response("are there any good salmon sashimi restaurants under 30 for dinner tomorrow at 7pm?")
