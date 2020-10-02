@@ -49,6 +49,7 @@ class Slots:
         self.num_guests = None
         self.restaurant_choice = 1
         self.result = None
+        self.reservation_required = 0
 
     def clear_slots(self):
         self.food_type = None
@@ -76,12 +77,14 @@ class Slots:
             return "restaurant"
     
     def check_res(self):
+        if self.restaurant == None:
+            return "restaurant"
         if self.date == None:
             return "date"
         if self.time == None:
             return "time"
-        if self.reserve_name == None:
-            return "reserve_name"
+        # if self.reserve_name == None:
+        #     return "reserve_name"
         if self.num_guests == None:
             return "num_guests"
 

@@ -92,10 +92,21 @@ def enquiry_handler(text):
 
     else:
         intent.reset_intent()
-        return get_enquiry(slot)
+        result, error_state = get_enquiry(slot)
+        return result
 
-def reservation_handler(text):
-    # should check if a restaurant has been identified yet
+def reservation_handler(text):    
+    if slot.reservation_required == 0:
+        # check how we entered here
+        if slot.result is None:
+            # we came in directly
+            slot.reservation_required = 1
+        
+        else:
+            # we came in from enquiry or recommendation
+            # check if we want to make a reservation
+            return check_reservation_choice(text)
+    
     entity = PredictNer(text)
     
     # check_identified_entities(entity, res)
@@ -109,7 +120,17 @@ def reservation_handler(text):
 
     else:
         intent.reset_intent()
-        return query_functions.get_reservation(slot)
+        return get_reservation(slot)
+
+def check_reservation_choice(text):
+    # hardcoded for now, replace with ner?
+    if text.find("yes") > -1:
+        slot.reservation_required = 1
+        return reservation_handler(text)
+    
+    else:
+        intent.reset_intent()
+        return "Okay! Is there anything else I can help you with?"
 
 def check_identified_entities(in_dict, ref):
     # check for which entities have yet to be identified
@@ -147,6 +168,8 @@ def get_enq_response(text):
         return "Sorry I don't understand what you mean, could you rephrase that please?"
 
 def get_res_response(text):
+    if text == 'restaurant':
+        return "Okay, which restaurant would you like to make a reservation for?"
     if text == 'date':
         return "What date is the reservation for?"
     if text == 'time':
@@ -164,7 +187,7 @@ def get_recommendation(slot):
     result = "Sorry, we did not manage to locate any restaurants that match your query"
     if df is None:
         error_state = 1
-        return result, error_state
+        # return result, error_state
     # print(len(df.index))
     # is resto open?
     ## check if open on that day
@@ -173,35 +196,53 @@ def get_recommendation(slot):
     # ## check if open at that timing
     # df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], slot.get_mealtime()))]
     # print(len(df.index))
-    df = df[df[slot.get_weekday()] == slot.get_mealtime()]
-   
-    # is resto within budget?
-    df = df[df['PriceRange'].isin(slot.get_budget())]
-
-    # is resto above rating? add in Sentiment_mean here
-    df = df[df['stars'] >= slot.rating]
-    
-    if len(df.index) == 0:
-        error_state = 2
-    # return df[:5].name.to_string()
-
-    if error_state == 2:
-        return result, error_state
-    
     else:
-        slot.result = df[['name', 'categories']][:3]
-        result = build_rec_response(slot.result.to_csv(index = False), slot)
-        return result, error_state
+        df = df[df[slot.get_weekday()] == slot.get_mealtime()]
+    
+        # is resto within budget?
+        df = df[df['PriceRange'].isin(slot.get_budget())]
+
+        # is resto above rating? add in Sentiment_mean here
+        df = df[df['stars'] >= slot.rating]
+    
+        if len(df.index) == 0:
+            error_state = 2
+    
+        else:
+            slot.result = df[['name', 'categories']][:3]
+            result = build_rec_response(slot.result.to_csv(index = False), slot)
+        
+    return result, error_state
         # return df[:5]
 
 def get_enquiry(slot):
+    error_state = 0
+    result = "Sorry, we couldn't find that restaurant!"
     df = load_resto()
-    
-    return df[df.name.str.lower() == slot.restaurant.lower()]
+    if df is None:
+        error_state = 1
+    else:
+        slot.result = df[df.name.str.lower() == slot.restaurant.lower()]
+        if len(slot.result.index) == 0:
+            error_state = 2
+        else:
+            result = build_enq_response(slot.result.to_csv(index = False), slot)
+    return result, error_state
 
 def get_reservation(slot):
-    # need some way of differentiating if we got here from enquiry or recommendation or directly
-    pass
+    error_state = 0
+    result = "Sorry, we couldn't find that restaurant!"
+    df = load_resto()
+    if df is None:
+        error_state = 1
+    else:
+        df = df[df.name.str.lower() == slot.restaurant.lower()]
+        if len(df.index) == 0:
+            error_state = 2
+        else:
+            df = df[df[slot.get_weekday()] == slot.get_mealtime()]
+            result = build_res_response(df.to_csv(index = False), slot)
+    return result, error_state
 
 def restaurant_open(series, list):
     open_list = []
