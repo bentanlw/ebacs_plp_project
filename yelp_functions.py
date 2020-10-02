@@ -24,24 +24,25 @@ def get_yelp_resto(entity_list):
     return result
 
 def bot_response(userText):
-        if intent.current_intent == None:
-            intent.update_intent(get_intent(userText))
-        
-        if intent.current_intent == 'unclassified':
-            intent.reset_intent()
-            return "Sorry I don't understand what you mean, could you rephrase that please?"
-        elif intent.current_intent == 'greeting':
-            intent.reset_intent()
-            return "Hi! I can help with a recommendation, an enquiry or even reservations!"
-        elif intent.current_intent == 'recommendation':
-            return recommendation_handler(userText)
-        elif intent.current_intent == 'enquiry':
-            return enquiry_handler(userText)
-        elif intent.current_intent == 'reservation':
-            return reservation_handler(userText)
-        else:#if none of the above, it is an 'goodbye' intent
-            intent.reset_intent()
-            return "Bye! Have a great day!"
+    print(vars(slot))
+    if intent.current_intent == None:
+        intent.update_intent(get_intent(userText))
+    
+    if intent.current_intent == 'unclassified':
+        intent.reset_intent()
+        return "Sorry I don't understand what you mean, could you rephrase that please?"
+    elif intent.current_intent == 'greeting':
+        intent.reset_intent()
+        return "Hi! I can help with a recommendation, an enquiry or even reservations!"
+    elif intent.current_intent == 'recommendation':
+        return recommendation_handler(userText)
+    elif intent.current_intent == 'enquiry':
+        return enquiry_handler(userText)
+    elif intent.current_intent == 'reservation':
+        return reservation_handler(userText)
+    else:#if none of the above, it is an 'goodbye' intent
+        intent.reset_intent()
+        return "Bye! Have a great day!"
     
 def get_intent(userText):
     predict = PredictClass(userText)
@@ -73,7 +74,7 @@ def get_restaurant(text):
     s = numerize(text)
     choice = int(re.search("\d+", s).group(0))
     if choice <= len(slot.result.index):
-        slot.restaurant = slot.result.name[choice - 1]
+        slot.restaurant = [slot.result.name[choice - 1]]
         intent.update_intent('reservation')
         return "You have selected {}! Would you like to make a reservation?".format(slot.restaurant)
     else:
@@ -198,7 +199,7 @@ def get_recommendation(slot):
     # df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], slot.get_mealtime()))]
     # print(len(df.index))
     else:
-        df = df[df[slot.get_weekday()] == slot.get_mealtime()]
+        df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], str(slot.get_mealtime())))]
     
         # is resto within budget?
         df = df[df['PriceRange'].isin(slot.get_budget())]
@@ -244,7 +245,7 @@ def get_reservation(slot):
     else:
         rest_list = [n.lower() for n in slot.restaurant]
         df = df[df.name.str.lower().isin(rest_list)]
-        df = df[df[slot.get_weekday()] == slot.get_mealtime()]
+        df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], str(slot.get_mealtime())))]
         df = df[df.name.str.lower().isin(rest_list)]
         if len(df.index) == 0:
             error_state = 2
@@ -257,16 +258,19 @@ def restaurant_open(series, list):
     open_list = []
     series_idx = series.index
     for idx, item in enumerate(series):
-        if check_mealtime(item[2], list):
+        if check_mealtime(str(item)[1:], list[1:]):
             open_list.append(series_idx[idx])
     return open_list
+
+#  [print(index) if e1 == e2 for index, (e1,e2) in enumerate(zip(list(i), list(j)))]
 
 def check_mealtime(list_1, list_2):
     is_open = False
     for index, (e1, e2) in enumerate(zip(list_1, list_2)):
         if e1 == e2:
-            if e1 == 1:
+            if int(e1) == 1:
                 is_open = True
+        # print(is_open)
     return is_open
 
 def format_rec_response(s):
