@@ -84,11 +84,17 @@ class Slots:
             return "num_guests"
 
     def get_date(self):
-        dt = timefhuman(self.date)
+        if self.date == None:
+            dt = timefhuman("today")
+        else:
+            dt = timefhuman(self.date)
         return dt.strftime('%d%m%y')
 
     def get_weekday(self):
-        dt = timefhuman(self.date)
+        if self.date == None:
+                dt = timefhuman("today")
+        else:
+            dt = timefhuman(self.date)
         return '{}_mealtype'.format(dt.strftime('%A'))
 
     def get_time(self):
@@ -107,17 +113,32 @@ class Slots:
         #dinner is 4-12am
         dinner_range = range(1600,2400)
         
-        time = int(self.get_time())
-        mealtime = 10000
+        if self.time == None and self.meal_type:
+            meal_list = [n.lower() for n in self.meal_type]
+            meal_list = list(set(meal_list))
+            mealtime = 10000
+            for time in meal_list:
+                if time in 'breakfast_range':
+                    mealtime += 1
+                if time in 'brunch_range':
+                    mealtime += 10
+                if time in 'lunch_range':
+                    mealtime += 100
+                if time in 'dinner_range':
+                    mealtime += 1000        
 
-        if time in breakfast_range:
-            mealtime += 1
-        if time in brunch_range:
-            mealtime += 10
-        if time in lunch_range:
-            mealtime += 100
-        if time in dinner_range:
-            mealtime += 1000
+        else:
+            time = int(self.get_time())
+            mealtime = 10000
+
+            if time in breakfast_range:
+                mealtime += 1
+            if time in brunch_range:
+                mealtime += 10
+            if time in lunch_range:
+                mealtime += 100
+            if time in dinner_range:
+                mealtime += 1000
         
         return mealtime
 

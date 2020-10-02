@@ -99,7 +99,7 @@ def similar_resto(terms, top_n=10,
 def load_resto():
 	# with open('models/resto_restaurants.pkl', 'rb') as f:
 	# 	resto = pickle.load(f)
-	resto = pd.read_csv('data/final.csv', index_col=0)
+	resto = pd.read_csv('data/final.csv', index_col=1)
 	resto = resto.dropna()
 	resto[resto.filter(regex = 'mealtype|PriceRange').columns] = resto[resto.filter(regex = 'mealtype|PriceRange').columns].astype(int)
 	return resto

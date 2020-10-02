@@ -144,7 +144,10 @@ def get_res_response(text):
 def get_recommendation(slot):
     error_handler = False
     df = similar_resto(slot.food_type, top_n = 1000)
-    print(len(df.index))
+    if df is None:
+        error_handler = True
+        return "Sorry, we did not manage to locate any restaurants that match your query"
+    # print(len(df.index))
     # is resto open?
     ## check if open on that day
     # df = df.loc[df[slot.get_weekday()].dropna().index]
@@ -170,6 +173,10 @@ def get_recommendation(slot):
     else:
         return build_rec_response(df[['name', 'categories']][:3].to_csv(index = False), slot)
         # return df[:5]
+
+def return_error(error_state):
+    if error_handler == True:
+        return "Sorry, we did not manage to locate any restaurants that match your query"
 
 def get_enquiry(slot):
     df = load_resto()
@@ -211,5 +218,5 @@ def build_rec_response(s, slot):
         ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
     return start+ss+end
 # setattr(slot, 'food_type', ['sashimi'])
-bot_response("are there any good salmon sashimi restaurants under 30 for dinner tomorrow at 7pm?")
+# bot_response("are there any good salmon sashimi restaurants under 30 for dinner tomorrow at 7pm?")
 
