@@ -47,6 +47,8 @@ class Slots:
         self.time = None
         self.reserve_name = None
         self.num_guests = None
+        self.restaurant_choice = 1
+        self.result = None
 
     def clear_slots(self):
         self.food_type = None

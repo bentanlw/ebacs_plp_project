@@ -4,6 +4,8 @@ import query_functions
 from mdl_classification import PredictClass
 from mdl_recognition import PredictNer
 from mdl_similarities import similar_resto, load_resto
+from numerizer import numerize
+import re
 
 intent = intents_functions.Intents()
 # enq = entities_functions.Enquiry()
@@ -22,25 +24,25 @@ def get_yelp_resto(entity_list):
     return result
 
 def bot_response(userText):
-    if intent.current_intent == None:
-        intent.update_intent(get_intent(userText))
+        if intent.current_intent == None:
+            intent.update_intent(get_intent(userText))
+        
+        if intent.current_intent == 'unclassified':
+            intent.reset_intent()
+            return "Sorry I don't understand what you mean, could you rephrase that please?"
+        elif intent.current_intent == 'greeting':
+            intent.reset_intent()
+            return "Hi! I can help with a recommendation, an enquiry or even reservations!"
+        elif intent.current_intent == 'recommendation':
+            return recommendation_handler(userText)
+        elif intent.current_intent == 'enquiry':
+            return enquiry_handler(userText)
+        elif intent.current_intent == 'reservation':
+            return reservation_handler(userText)
+        else:#if none of the above, it is an 'goodbye' intent
+            intent.reset_intent()
+            return "Bye! Have a great day!"
     
-    if intent.current_intent == 'unclassified':
-        intent.reset_intent()
-        return "Sorry I don't understand what you mean, could you rephrase that please?"
-    elif intent.current_intent == 'greeting':
-        intent.reset_intent()
-        return "Hi! I can help with a recommendation, an enquiry or even reservations!"
-    elif intent.current_intent == 'recommendation':
-        return recommendation_handler(userText)
-    elif intent.current_intent == 'enquiry':
-        return enquiry_handler(userText)
-    elif intent.current_intent == 'reservation':
-        return reservation_handler(userText)
-    else:#if none of the above, it is an 'goodbye' intent
-        intent.reset_intent()
-        return "Bye! Have a great day!"
-
 def get_intent(userText):
     predict = PredictClass(userText)
     return predict[1]
@@ -52,15 +54,30 @@ def recommendation_handler(text):
     check_identified_entities(entity, slot)
     # slot_needed = check_unfilled_entities(rec)
     slot_needed = slot.check_rec()
-
+   
     if slot_needed:
         return get_rec_response(slot_needed)
     
+    if slot.restaurant_choice == 0:
+        return get_restaurant(text)
+    
     else:
         # check_database_using_query
-        intent.reset_intent()
-        return get_recommendation(slot)
+        # intent.reset_intent()
+        result, error_state = get_recommendation(slot)
+        if error_state == 0:
+            slot.restaurant_choice = 0
+        return result
     
+def get_restaurant(text):
+    s = numerize(text)
+    choice = int(re.search("\d+", s).group(0))
+    if choice <= len(slot.result.index):
+        slot.restaurant = slot.result.name[choice - 1]
+        intent.update_intent('reservation')
+        return "You have selected {}! Would you like to make a reservation?".format(slot.restaurant)
+    else:
+        return "Sorry that's not a valid restaurant number"
 
 def enquiry_handler(text):
     entity = PredictNer(text)
@@ -142,11 +159,12 @@ def get_res_response(text):
         return "Sorry I don't understand what you mean, could you rephrase that please?"
 
 def get_recommendation(slot):
-    error_handler = False
+    error_state = 0 #0 no error, 1 df is None, 2 df filtered out 
     df = similar_resto(slot.food_type, top_n = 1000)
+    result = "Sorry, we did not manage to locate any restaurants that match your query"
     if df is None:
-        error_handler = True
-        return "Sorry, we did not manage to locate any restaurants that match your query"
+        error_state = 1
+        return result, error_state
     # print(len(df.index))
     # is resto open?
     ## check if open on that day
@@ -164,19 +182,17 @@ def get_recommendation(slot):
     df = df[df['stars'] >= slot.rating]
     
     if len(df.index) == 0:
-        error_handler = True
+        error_state = 2
     # return df[:5].name.to_string()
 
-    if error_handler == True:
-        return "Sorry, we did not manage to locate any restaurants that match your query"
+    if error_state == 2:
+        return result, error_state
     
     else:
-        return build_rec_response(df[['name', 'categories']][:3].to_csv(index = False), slot)
+        slot.result = df[['name', 'categories']][:3]
+        result = build_rec_response(slot.result.to_csv(index = False), slot)
+        return result, error_state
         # return df[:5]
-
-def return_error(error_state):
-    if error_handler == True:
-        return "Sorry, we did not manage to locate any restaurants that match your query"
 
 def get_enquiry(slot):
     df = load_resto()
