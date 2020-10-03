@@ -61,7 +61,10 @@ class Slots:
         self.time = None
         self.reserve_name = None
         self.num_guests = None
-
+        self.restaurant_choice = 1
+        self.result = None
+        self.reservation_required = 0
+        
     def check_rec(self):
         if self.food_type == None:
             return "food_type"

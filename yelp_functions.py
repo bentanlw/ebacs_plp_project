@@ -132,6 +132,7 @@ def check_reservation_choice(text):
     
     else:
         intent.reset_intent()
+        slot.clear_slots()
         return "Okay! Is there anything else I can help you with?"
 
 def check_identified_entities(in_dict, ref):
