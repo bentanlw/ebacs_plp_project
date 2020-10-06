@@ -100,7 +100,7 @@ class Slots:
 
     def get_weekday(self):
         if self.date == None:
-                dt = timefhuman("today")
+            dt = timefhuman("today")
         else:
             dt = timefhuman(self.date)
         return '{}_mealtype'.format(dt.strftime('%A'))

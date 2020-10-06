@@ -160,7 +160,7 @@ def PredictClass(text):
 	input_text = PrepareData2(text)
 	prediction = model.predict(input_text)
 
-	if max(prediction[0])<(1/len(labels))*1.5:
+	if max(prediction[0])<(1/(len(labels)-0))*1.5:
 		label = 'unclassified'
 	else:
 		label = labels[np.argmax(prediction[0])]

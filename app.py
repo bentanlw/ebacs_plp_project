@@ -37,7 +37,8 @@ def text_to_json(text):
 @app.route('/') # decorator to turn a python function to Flask view
 @app.route('/home/')
 def home():
-    return(render_template('chatbot.html'))
+	yelp_functions.bot_reset()
+	return(render_template('chatbot.html'))
 
 @app.route('/get')
 def get_bot_response():

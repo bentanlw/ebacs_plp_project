@@ -61,11 +61,15 @@ def similar_resto(terms, top_n=10,
 	user = _get_ents(terms, vocab)
 	addn = []
 
+	print(user)
+
 	for term in user:
 		addn.extend([x for (x,y) in model.wv.most_similar(term, topn=3)])
 
 	user.extend(addn)
 	user = list(set(user))
+
+	print(user)
 
 	if len(user)==0:
 		return(None)
@@ -75,8 +79,14 @@ def similar_resto(terms, top_n=10,
 	embed_all = pd.DataFrame.from_dict(embed_resto, orient='index')
 
 	cosine_sim = cosine_similarity(embed_all)[-1][:-1]
-	df_cosine_sim = pd.Series(cosine_sim, index=list(embed_resto.keys())[:-1])
+	df_cosine_sim = pd.Series(cosine_sim, index=list(embed_resto.keys())[:-1], name='similarity')
 	df_cosine_sim.sort_values(ascending=False, inplace=True)
+
+	df_cosine_sim1 = df_cosine_sim.to_frame()
+	df_cosine_sim1.reset_index(inplace=True)
+	df_cosine_sim1.columns = ['name1', 'similarity']
+
+	df_cosine_sim.to_csv('rec_top_sim.csv')
 
 	# filter by matching terms
 	# patterns = '('+')|('.join(user)+')'
@@ -88,13 +98,21 @@ def similar_resto(terms, top_n=10,
 	# print(df_cosine_sim[:top_n], df_cosine_sim[:top_n].index)
 	# resto_id = resto[resto['name'].str.lower().isin(df_cosine_sim[:top_n].index)].index
 	# map_id = mapper[mapper['business_id'].isin(resto_id)].business_id1
-	map_id = mapper[mapper['name1'].isin(df_cosine_sim[:top_n].index)].business_id1
+	
+	map_id = mapper[mapper['name1'].isin(df_cosine_sim[:top_n].index)]\
+	.loc[:,['business_id1','name1']]\
+	.set_index('business_id1')
+	
+	# resto[resto.index.isin(map_id['business_id1'])]
+	restos = resto.merge(map_id, left_index=True, right_index=True, how='inner')
+	restos = restos.merge(df_cosine_sim1, on='name1', how='inner')
+	restos.drop_duplicates(inplace=True)
 
 	# directly go from df_cosin_sim to name1 in mapper
 	# query resto using biz_id1 from mapper
 
 	# return resto.loc[df_cosine_sim[:top_n].index,get_fields]
-	return resto[resto.index.isin(map_id)]
+	return restos
 
 def load_resto():
 	# with open('models/resto_restaurants.pkl', 'rb') as f:
@@ -102,7 +120,8 @@ def load_resto():
 	resto = pd.read_csv('data/final.csv', index_col=1)
 	resto = resto.dropna()
 	resto[resto.filter(regex = 'mealtype|PriceRange').columns] = resto[resto.filter(regex = 'mealtype|PriceRange').columns].astype(int)
-	resto['score'] = resto['stars']*resto['Sentiment_mean']
+	# resto['score'] = resto['stars']*resto['Sentiment_mean']
+	resto['score'] = resto['Sentiment_mean']
 	return resto
 def load_mapper():
 	with open('models/resto_mapper.pkl', 'rb') as f:

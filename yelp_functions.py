@@ -23,10 +23,30 @@ def get_yelp_resto(entity_list):
     else: result = "Sorry, we don't support that just yet!"
     return result
 
+def bot_reset():
+    slot.clear_slots()
+    intent.reset_intent()
+    return None
+
 def bot_response(userText):
     print(vars(slot))
+
+    user_intent = get_intent(userText)
+
+    userText = userText.lower().strip()
+    if userText == 'quit':
+        slot.clear_slots()
+        intent.reset_intent()
+        return "Bye! Have a great day!"
+
     if intent.current_intent == None:
-        intent.update_intent(get_intent(userText))
+        intent.update_intent(user_intent)
+    elif user_intent in ['greeting', 'goodbye', 'unclassified']:
+        pass
+    elif intent.current_intent == 'enquiry':
+        intent.update_intent(user_intent)
+    elif (intent.current_intent == 'recommendation') & (user_intent == 'reservation'):
+        intent.update_intent(user_intent)
     
     if intent.current_intent == 'unclassified':
         intent.reset_intent()
@@ -39,6 +59,14 @@ def bot_response(userText):
     elif intent.current_intent == 'enquiry':
         return enquiry_handler(userText)
     elif intent.current_intent == 'reservation':
+        # if userText in ['today', 'tomorrow', 'tonight']:
+        #     slot.date = userText
+
+        # time_pattern = '([\d]{0,2}[\.:]?[\d]{1,2})\s?(pm|p\.m\.|am|a\.m\.|nn|noon)'
+
+        # if re.search(time_pattern, userText) != None:
+        #     slot.time = ''.join([x for x in re.search(time_pattern, userText).group(0).split()])
+        
         return reservation_handler(userText)
     else:#if none of the above, it is an 'goodbye' intent
         intent.reset_intent()
@@ -50,6 +78,11 @@ def get_intent(userText):
 
 def recommendation_handler(text):
     entity = PredictNer(text)
+    
+    if entity.get('food_type', None)!=None:
+        # entity['food_type'] += [x.lower() for x in set(text.split())]
+        entity['food_type'] += [x.lower() for x in [text] if len(x.split())<3]
+        entity['food_type'] = list(set(entity['food_type']))
 
     # check_identified_entities(entity, rec)
     check_identified_entities(entity, slot)
@@ -68,13 +101,20 @@ def recommendation_handler(text):
         result, error_state = get_recommendation(slot)
         if error_state == 0:
             slot.restaurant_choice = 0
+
+        else:
+            error_state = 0
+            slot.clear_slots()
+            intent.reset_intent()
+
         return result
     
 def get_restaurant(text):
     s = numerize(text)
     choice = int(re.search("\d+", s).group(0))
+
     if choice <= len(slot.result.index):
-        slot.restaurant = [slot.result.name[choice - 1]]
+        slot.restaurant = [slot.result.name.iloc[choice - 1]]
         intent.update_intent('reservation')
         return "You have selected {}! Would you like to make a reservation?".format(slot.restaurant)
     else:
@@ -156,11 +196,11 @@ def get_rec_response(text):
     if text == 'food_type':
         return "Okay, what type of food would you like?"
     if text == 'meal_type':
-        return "What type of meal is this?"
+        return "What type of meal is this (e.g. breakfast, lunch, dinner)?"
     if text == 'price':
         return "Alright, do you have a budget in mind?"
     if text == 'rating':
-        return "How good of a restaurant?"
+        return "How good of a restaurant (e.g. 1-5 stars)?"
     else:
         return "Sorry I don't understand what you mean, could you rephrase that please?"
 
@@ -186,7 +226,9 @@ def get_res_response(text):
 
 def get_recommendation(slot):
     error_state = 0 #0 no error, 1 df is None, 2 df filtered out 
-    df = similar_resto(slot.food_type, top_n = 1000)
+    df = similar_resto(slot.food_type, top_n = 20)
+    df.to_csv('rec_top_n.csv')
+
     result = "Sorry, we did not manage to locate any restaurants that match your query"
     if df is None:
         error_state = 1
@@ -200,20 +242,29 @@ def get_recommendation(slot):
     # df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], slot.get_mealtime()))]
     # print(len(df.index))
     else:
-        df = df[df.index.isin(restaurant_open(df[slot.get_weekday()], str(slot.get_mealtime())))]
+
+        print(df.head())
+
+        df['score'] = df['similarity']
+        df['similarity'] = df['similarity'].apply(lambda x: int(x*100)/100)
+        df['Sentiment_mean'] = df['Sentiment_mean'].apply(lambda x: int(x*100)/100)
+        
+        # multiplied stars by sentiment, so here i sort by the final product
+        df = df.sort_values(by=['similarity', 'Sentiment_mean', 'stars'], ascending = False)
+        print(df.head())
+
+        df1 = df[df.index.isin(restaurant_open(df[slot.get_weekday()], str(slot.get_mealtime())))]
     
         # is resto within budget?
-        df = df[df['PriceRange'].isin(slot.get_budget())]
+        df1 = df1[df1['PriceRange'].isin(slot.get_budget())]
 
-        # multiplied stars by sentiment, so here i sort by the final product
-        df = df.sort_values(by = ['score'], ascending = False)
-    
-        if len(df.index) == 0:
+        if len(df1.index) == 0:
             error_state = 2
     
         else:
-            slot.result = df[['name', 'categories']][:3]
-            result = build_rec_response(slot.result.to_csv(index = False), slot)
+            slot.result = df1[['name', 'categories']][:3]
+            # result = build_rec_response(slot.result.to_csv(index = False), slot)
+            result = build_rec_response(slot.result, slot)
         
     return result, error_state
         # return df[:5]
@@ -275,16 +326,21 @@ def check_mealtime(list_1, list_2):
     return is_open
 
 def format_rec_response(s):
-    s_list = s.split("\r\n")[1:-1]
-    s_list = [element.split(",\"") for element in s_list]
-    s_list = [[m.replace("\"","") for m in n] for n in s_list]
+    # s_list = s.split("\r\n")[1:-1]
+    # print(s_list)
+    # s_list = [element.split(",\"") for element in s_list]
+    # print(s_list)
+    # s_list = [[m.replace("\"","") for m in n] for n in s_list]
+    # print(s_list)
+    # return s_list
 
-    return s_list
+    return [[resto, category] for (resto, category) in zip(s['name'], s['categories'])]
 
 def build_rec_response(s, slot):
     start = "We found the following restaurants that match {}<br/><br/>".format(slot.food_type)
     ss = ""
     end = "<br/>Which number of restaurant would you prefer?"
+
     for i, n in enumerate(format_rec_response(s)):
         ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
     return start+ss+end
