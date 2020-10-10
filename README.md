@@ -11,6 +11,7 @@ Installation instructions:
 3. Navigate to ebacs_plp_project folder
 4. Open cmd prompt (or anaconda prompt)
 5. type pip install -r requirements.txt
+6. type python -m spacy download en_core_web_sm
 
 Run instructions:
 1. Open cmd prompt (or anaconda prompt)
