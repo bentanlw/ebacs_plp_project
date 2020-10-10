@@ -1,4 +1,5 @@
 flask==1.1.2
+Flask-SQLAlchemy
 spacy==2.3.1
 timefhuman==0.0.5
 sklearn==0.0
