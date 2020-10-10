@@ -12,5 +12,6 @@ This project requires Python 3.7
 
 ## Run instructions:
 1. Open cmd prompt (or anaconda prompt)
+2. conda activate <new_env_name> (the same one created during installation)
 2. type python app.py
 3. New browser tab should open with chatbot
