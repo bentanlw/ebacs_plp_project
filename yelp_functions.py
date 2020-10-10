@@ -1,6 +1,5 @@
 import entities_functions
 import intents_functions
-import query_functions
 from mdl_classification import PredictClass
 from mdl_recognition import PredictNer
 from mdl_similarities import similar_resto, load_resto
