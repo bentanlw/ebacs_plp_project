@@ -32,9 +32,9 @@
             $('.message_input').val('');
             $messages = $('.messages');
             if (speaker === 'user') {
-              message_side = 'left';
-            } else {
               message_side = 'right';
+            } else {
+              message_side = 'left';
             }
 
             message = new Message({
