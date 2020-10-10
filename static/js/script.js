@@ -62,7 +62,7 @@
             };
         });
         setTimeout(function () {
-          return sendMessage("Hi! what would you like to eat?", 'bot');
+          return sendMessage("Hi! I can help with a recommendation, an enquiry or even reservations!", 'bot');
         }, 500);
         return setTimeout();
     });
