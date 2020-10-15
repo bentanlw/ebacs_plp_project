@@ -72,5 +72,5 @@ def PredictNer(text):
 
 	# prediction1 = {ent.label_ : ent.text for ent in prediction.ents}
 	prediction1['text'] = [prediction.text]
-	
+	print("Predicted NER: {}".format(prediction1))
 	return prediction1

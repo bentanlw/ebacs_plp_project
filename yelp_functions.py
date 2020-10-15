@@ -16,6 +16,7 @@ def bot_reset():
 
 def bot_response(userText):
     print(vars(slot))
+    print("current intent: {}".format(vars(intent)))
 
     user_intent = get_intent(userText)
 
@@ -31,8 +32,8 @@ def bot_response(userText):
         pass
     elif intent.current_intent == 'enquiry':
         intent.update_intent(user_intent)
-    elif (intent.current_intent == 'recommendation') & (user_intent == 'reservation'):
-        intent.update_intent(user_intent)
+    # elif (intent.current_intent == 'recommendation') & (user_intent == 'reservation'):
+    #     intent.update_intent(user_intent)
     
     if intent.current_intent == 'unclassified':
         intent.reset_intent()

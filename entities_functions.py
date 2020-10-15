@@ -91,10 +91,15 @@ class Slots:
         if self.num_guests == None:
             return "num_guests"
 
+    def check_date(self):
+        self.date = [n.lower().replace('tonight', 'today') for n in self.date]
+        return
+
     def get_date(self):
         if self.date == None:
             dt = timefhuman("today")
         else:
+            self.check_date()
             dt = timefhuman(self.date)
         return dt.strftime('%d%m%y')
 
@@ -102,6 +107,7 @@ class Slots:
         if self.date == None:
             dt = timefhuman("today")
         else:
+            self.check_date()
             dt = timefhuman(self.date)
         return '{}_mealtype'.format(dt.strftime('%A'))
 
