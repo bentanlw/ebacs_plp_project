@@ -28,25 +28,25 @@ body {
   padding: 20px 0 15px;
   box-shadow: 0 1px 30px rgba(0, 0, 0, 0.1);
 }
-.top_menu .buttons {
-  margin: 3px 0 0 20px;
+.top_menu .button {
+  margin: 3px 0 0 10px;
   position: absolute;
+  text-align: center;
 }
-.top_menu .buttons .button {
+.top_menu .button .button {
   width: 16px;
   height: 16px;
   border-radius: 50%;
   display: inline-block;
-  margin-right: 10px;
   position: relative;
 }
-.top_menu .buttons .button.close {
+.top_menu .button .button.closes {
   background-color: #f5886e;
 }
-.top_menu .buttons .button.minimize {
+.top_menu .button .button.minimize {
   background-color: #fdbf68;
 }
-.top_menu .buttons .button.maximize {
+.top_menu .button .button.maximize {
   background-color: #a3d063;
 }
 .top_menu .title {
@@ -86,7 +86,7 @@ body {
   color: #c48843;
 }
 .messages .message.right .avatar {
-  background-color: #fdbf68;
+  background-color: #187099;
   float: right;
 }
 .messages .message.right .text_wrapper {
@@ -109,6 +109,11 @@ body {
   height: 60px;
   border-radius: 50%;
   display: inline-block;
+  text-align: center;
+  line-height: 60px;
+  font-weight: bold;
+  font-size: 25px;
+  color: #fff;
 }
 .messages .message .text_wrapper {
   display: inline-block;

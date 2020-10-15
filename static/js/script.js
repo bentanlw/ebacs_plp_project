@@ -7,10 +7,13 @@
                 var $message;
                 $message = $($('.message_template').clone().html());
                 $message.addClass(_this.message_side).find('.text').html(_this.text);
+                if (_this.message_side == 'left') {
+                    $message.find('.avatar').text("RB");
+                }
                 $('.messages').append($message);
                 return setTimeout(function () {
                     return $message.addClass('appeared');
-                }, 0);
+                }, 1000);
             };
         }(this);
         return this;
@@ -35,6 +38,7 @@
               message_side = 'right';
             } else {
               message_side = 'left';
+              
             }
 
             message = new Message({
@@ -64,6 +68,6 @@
         setTimeout(function () {
           return sendMessage("Hi! I can help with a recommendation, an enquiry or even reservations!", 'bot');
         }, 500);
-        return setTimeout();
+        return setTimeout(100);
     });
 }.call(this));
