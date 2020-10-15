@@ -13,7 +13,7 @@
                 $('.messages').append($message);
                 return setTimeout(function () {
                     return $message.addClass('appeared');
-                }, 1000);
+                }, 0);
             };
         }(this);
         return this;
@@ -68,6 +68,6 @@
         setTimeout(function () {
           return sendMessage("Hi! I can help with a recommendation, an enquiry or even reservations!", 'bot');
         }, 500);
-        return setTimeout(100);
+        return setTimeout(0);
     });
 }.call(this));
