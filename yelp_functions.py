@@ -20,27 +20,22 @@ def bot_response(userText):
 
     user_intent = get_intent(userText)
 
-    userText = userText.lower().strip()
-    if userText == 'quit':
+    if userText.lower().strip() == 'quit':
         slot.clear_slots()
         intent.reset_intent()
         return "Bye! Have a great day!"
 
+    # check update current_intent if None
     if intent.current_intent == None:
         intent.update_intent(user_intent)
-    elif user_intent in ['greeting', 'goodbye', 'unclassified']:
-        pass
-    elif intent.current_intent == 'enquiry':
-        intent.update_intent(user_intent)
-    # elif (intent.current_intent == 'recommendation') & (user_intent == 'reservation'):
-    #     intent.update_intent(user_intent)
-    
-    if intent.current_intent == 'unclassified':
-        intent.reset_intent()
-        return "Sorry I don't understand what you mean, could you rephrase that please?"
-    elif intent.current_intent == 'greeting':
+
+    # decide what to do based on current_intent
+    if intent.current_intent == 'greeting':
         intent.reset_intent()
         return "Hi! I can help with a recommendation, an enquiry or even reservations!"
+    elif intent.current_intent == 'unclassified':
+        intent.reset_intent()
+        return "Sorry I don't understand what you mean, could you rephrase that please?"
     elif intent.current_intent == 'recommendation':
         return recommendation_handler(userText)
     elif intent.current_intent == 'enquiry':
@@ -55,7 +50,7 @@ def bot_response(userText):
         #     slot.time = ''.join([x for x in re.search(time_pattern, userText).group(0).split()])
         
         return reservation_handler(userText)
-    else:#if none of the above, it is an 'goodbye' intent
+    else:   #if none of the above, it is an 'goodbye' intent
         intent.reset_intent()
         return "Bye! Have a great day!"
     
@@ -80,7 +75,10 @@ def recommendation_handler(text):
         return get_rec_response(slot_needed)
     
     if slot.restaurant_choice == 0:
-        return get_restaurant(text)
+        if text == 'more':
+            return get_recommendation(slot)
+        else:
+            return get_restaurant(text)
     
     else:
         # check_database_using_query
@@ -103,6 +101,7 @@ def get_restaurant(text):
     if choice <= len(slot.result.index):
         slot.restaurant = [slot.result.name.iloc[choice - 1]]
         intent.update_intent('reservation')
+        setattr(slot, 'restaurant_choice', 1)
         return "You have selected {}! Would you like to make a reservation?".format(slot.restaurant)
     else:
         return "Sorry that's not a valid restaurant number"
@@ -169,8 +168,9 @@ def check_identified_entities(in_dict, ref):
     in_keys = set(in_dict.keys())
     shared_keys = in_keys.intersection(ref_keys)
     
-    for key in shared_keys:
-        setattr(ref, key, in_dict[key])
+    if slot.restaurant_choice == 1:
+        for key in shared_keys:
+            setattr(ref, key, in_dict[key])
 
     return
 
@@ -240,6 +240,7 @@ def get_recommendation(slot):
         df = df.sort_values(by=['similarity', 'Sentiment_mean', 'stars'], ascending = False)
         print(df.head())
 
+        # check if open at that timing
         df1 = df[df.index.isin(restaurant_open(df[slot.get_weekday()], str(slot.get_mealtime())))]
     
         # is resto within budget?
@@ -249,7 +250,7 @@ def get_recommendation(slot):
             error_state = 2
     
         else:
-            slot.result = df1[['name', 'categories']][:3]
+            slot.result = df1[['name', 'categories']].sample(3)
             # result = build_rec_response(slot.result.to_csv(index = False), slot)
             result = build_rec_response(slot.result, slot)
         
@@ -326,7 +327,7 @@ def format_rec_response(s):
 def build_rec_response(s, slot):
     start = "We found the following restaurants that match {}<br/><br/>".format(slot.food_type)
     ss = ""
-    end = "<br/>Which number of restaurant would you prefer?"
+    end = '<br/>Which number of restaurant would you prefer? (type "more" for other options!)'
 
     for i, n in enumerate(format_rec_response(s)):
         ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
