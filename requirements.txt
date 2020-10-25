@@ -2,7 +2,7 @@ flask==1.1.2
 Flask-SQLAlchemy
 spacy==2.3.1
 timefhuman==0.0.5
-sklearn==0.0
+scikit-learn==0.23.0
 pandas==1.1.1
 numpy==1.19.1
 keras==2.3.1

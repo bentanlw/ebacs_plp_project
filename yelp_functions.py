@@ -23,7 +23,13 @@ def bot_response(userText):
     if userText.lower().strip() == 'quit':
         slot.clear_slots()
         intent.reset_intent()
-        return "Bye! Have a great day!"
+        return "Bye! Have a great day! (You may ask another question to start a new conversation)"
+
+    options = ['reservation', 'enquiry', 'recommendation']
+    opt_found = [word for word in options if word in userText.lower().strip()]
+    if len(opt_found) > 0:
+        intent.update_intent(opt_found[0])
+
 
     # check update current_intent if None
     if intent.current_intent == None:
@@ -75,7 +81,7 @@ def recommendation_handler(text):
         return get_rec_response(slot_needed)
     
     if slot.restaurant_choice == 0:
-        if text == 'more':
+        if text.lower() == 'more':
             return get_recommendation(slot)
         else:
             return get_restaurant(text)
@@ -273,7 +279,7 @@ def get_enquiry(slot):
         if len(slot.result.index) == 0:
             error_state = 2
         else:
-            result = build_enq_response(slot.result.to_csv(index = False), slot)
+            result = build_enq_response(slot.result.values.tolist(), slot)
     return result, error_state
 
 def get_reservation(slot):
@@ -324,6 +330,15 @@ def format_rec_response(s):
 
     return [[resto, category] for (resto, category) in zip(s['name'], s['categories'])]
 
+def format_enq_response(s):
+    s_list = s.split("\r\n")[1:-1]
+    # print(s_list)
+    s_list = [element.split(",\"") for element in s_list]
+    # print(s_list)
+    s_list = [[m.replace("\"","") for m in n] for n in s_list]
+    # print(s_list)
+    return s_list
+
 def build_rec_response(s, slot):
     start = "We found the following restaurants that match {}<br/><br/>".format(slot.food_type)
     ss = ""
@@ -337,8 +352,9 @@ def build_enq_response(s, slot):
     start = "Here are the details for {}<br/><br/>".format(slot.restaurant)
     ss = ""
     end = "<br/>Would you like to make a reservation?"
-    for i, n in enumerate(format_rec_response(s)):
-        ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
+    # for i, n in enumerate(format_enq_response(s)):
+        # ss = ss + "{}.&ensp;{}&emsp;&emsp;[{}]<br/>".format(i+1, n[0], n[1])
+    ss = "Address:&ensp;{}<br/>Opening Hours:&ensp;{}<br/>Categories:&ensp;{}<br/>".format(slot.result.address[0], slot.result.hours[0], slot.result.categories[0])
     return start+ss+end
 
 def build_res_response(s, slot):
