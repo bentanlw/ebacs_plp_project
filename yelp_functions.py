@@ -110,7 +110,7 @@ def get_restaurant(text):
         setattr(slot, 'restaurant_choice', 1)
         return "You have selected {}! Would you like to make a reservation?".format(slot.restaurant)
     else:
-        return "Sorry that's not a valid restaurant number"
+        return "Sorry that's not a valid restaurant number, please select 1, 2 or 3"
 
 def enquiry_handler(text):
     entity = PredictNer(text)
